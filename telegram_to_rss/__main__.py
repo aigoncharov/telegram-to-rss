@@ -1,10 +1,8 @@
-from telegram_to_rss.connection import connect
-from telegram_to_rss.client import init_client
+from telegram_to_rss.server import app
 
 
 def main():
-    client = init_client()
-    connect(client)
+    app.run(debug=True)
 
 
 if __name__ == "__main__":

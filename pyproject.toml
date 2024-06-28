@@ -10,6 +10,7 @@ packages = [{include = "telegram_to_rss"}]
 [tool.poetry.dependencies]
 python = "^3.12"
 Telethon = "^1.36.0"
+quart = "^0.19.6"
 
 
 [build-system]
