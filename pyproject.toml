@@ -11,6 +11,9 @@ packages = [{include = "telegram_to_rss"}]
 python = "^3.12"
 Telethon = "^1.36.0"
 quart = "^0.19.6"
+feedgen = "^1.0.0"
+qrcode = "^7.4.2"
+peewee = "^3.17.5"
 
 
 [build-system]

@@ -1,0 +1,11 @@
+{% extends "base.html" %} {% block content %}
+<div>
+  <p>1. In Telegram on your phone go to Settings -> Devices.</p>
+  <p>2. Click on "Link Desktop Device" and scan this QR code.</p>
+  <p>3. Give it a few seconds before you panic and think it does not work.</p>
+  <p>4. If it does not work indeed, check the logs.</p>
+  <p>
+    <img src="{{ qr_code }}" width="80%" />
+  </p>
+</div>
+{% endblock %}

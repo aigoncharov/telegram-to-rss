@@ -163,3 +163,4 @@ cython_debug/
 
 # App specific artifacts
 *.session
+*.session-journal
