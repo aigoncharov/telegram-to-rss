@@ -27,4 +27,5 @@ async def root():
         qr_code_image = get_qr_code_image(client.qr_code_url)
         return await render_template("qr_code.html", qr_code=qr_code_image)
 
-    return await client.list_dialogs()
+    feeds = await client.list_dialogs()
+    return await render_template("feeds.html", user=client.user, feeds=feeds)

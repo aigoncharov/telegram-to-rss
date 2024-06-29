@@ -1,5 +1,7 @@
 from telethon import TelegramClient, types, errors
 
+from telegram_to_rss.consts import TELEGRAM_NOTIFICATIONS_DIALOG_ID
+
 
 class TelegramToRssClient:
     __telethon: TelegramClient
@@ -39,10 +41,16 @@ class TelegramToRssClient:
             await self.__telethon.disconnect()
 
     async def list_dialogs(self):
-        dialogs = {}
-        async for dialog in self.__telethon.iter_dialogs():
-            dialogs[dialog.id] = dialog
-        return dialogs
+        all_dialogs = await self.__telethon.get_dialogs()
+        filtered_dialogs = [
+            dialog
+            for dialog in all_dialogs
+            if (
+                dialog.id != TELEGRAM_NOTIFICATIONS_DIALOG_ID
+                and dialog.entity.id != self.__user.id
+            )
+        ]
+        return filtered_dialogs
 
     @property
     def qr_code_url(self):

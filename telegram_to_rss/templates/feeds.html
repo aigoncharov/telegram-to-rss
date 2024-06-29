@@ -1,0 +1,18 @@
+{% extends "base.html" %} {% block content %}
+<div>
+  <p>
+    Logged in as {{ user.first_name }} {{ user.last_name }} ({{ user.username
+    }}).
+  </p>
+  <p>Available feeds:</p>
+  <ul>
+    {% for feed in feeds %}
+    <li>
+      <p>{{ feed.name }} ({{ feed.id }})</p>
+    </li>
+    {% else %}
+    <p>No feeds available</p>
+    {% endfor %}
+  </ul>
+</div>
+{% endblock %}
