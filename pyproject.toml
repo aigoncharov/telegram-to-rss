@@ -17,6 +17,16 @@ peewee = "^3.17.5"
 platformdirs = "^4.2.2"
 
 
+[tool.poetry.group.dev.dependencies]
+flake8 = "^7.1.0"
+flake8-bugbear = "^24.4.26"
+flake8-pyproject = "^1.2.3"
+
+[tool.flake8]
+max-line-length = 80
+extend-select = B950
+extend-ignore = E203,E501,E701
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

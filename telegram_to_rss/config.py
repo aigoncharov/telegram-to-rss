@@ -6,6 +6,8 @@ api_id = int(os.environ.get("TG_API_ID"))
 api_hash = os.environ.get("TG_API_HASH")
 password = os.environ.get("TG_PASSWORD")
 
+update_interval_seconds = int(os.environ.get("UPDATE_INTERVAL") or 3600)
+
 data_dir = Path(os.environ.get("DATA_DIR")) or Path(user_data_dir).joinpath(
     "telegram_to_rss"
 )
