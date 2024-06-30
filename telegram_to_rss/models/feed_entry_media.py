@@ -7,4 +7,4 @@ class FeedEntryMedia(Model):
     feed_entry = fields.ForeignKeyField(
         "models.FeedEntry", on_delete=fields.CASCADE, related_name="media"
     )
-    path = fields.TextField()
+    media = fields.BinaryField()

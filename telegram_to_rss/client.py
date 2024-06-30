@@ -1,6 +1,6 @@
-from telethon import TelegramClient, types, errors
-
+from telethon import TelegramClient, types, errors, custom
 from telegram_to_rss.consts import TELEGRAM_NOTIFICATIONS_DIALOG_ID
+from telegram_to_rss.config import message_limit
 
 
 class TelegramToRssClient:
@@ -40,7 +40,7 @@ class TelegramToRssClient:
         if self._telethon.is_connected():
             await self._telethon.disconnect()
 
-    async def list_dialogs(self):
+    async def list_dialogs(self) -> list[custom.Dialog]:
         all_dialogs = await self._telethon.get_dialogs()
         filtered_dialogs = [
             dialog
@@ -51,6 +51,10 @@ class TelegramToRssClient:
             )
         ]
         return filtered_dialogs
+
+    async def get_dialog_messages(self, dialog: custom.Dialog) -> list[custom.Message]:
+        messages = await self._telethon.get_messages(dialog, limit=message_limit)
+        return messages
 
     @property
     def qr_code_url(self):
