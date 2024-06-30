@@ -15,6 +15,7 @@ feedgen = "^1.0.0"
 qrcode = "^7.4.2"
 platformdirs = "^4.2.2"
 tortoise-orm = "^0.21.3"
+anyio = "^4.4.0"
 
 
 [tool.poetry.group.dev.dependencies]

@@ -2,14 +2,20 @@ from telegram_to_rss.client import TelegramToRssClient, custom
 from telegram_to_rss.models import Feed, FeedEntry, FeedEntryMedia
 from tortoise.expressions import Q
 from tortoise.transactions import atomic
-from telegram_to_rss.config import message_limit
+from pathlib import Path
 
 
 class TelegramPoller:
     _client: TelegramToRssClient
+    _message_limit: int
+    _static_path: Path
 
-    def __init__(self, client: TelegramToRssClient) -> None:
+    def __init__(
+        self, client: TelegramToRssClient, message_limit: int, static_path: Path
+    ) -> None:
         self._client = client
+        self._message_limit = message_limit
+        self._static_path = static_path
 
     async def fetch_dialogs(self):
         tg_dialogs = await self._client.list_dialogs()
@@ -40,7 +46,7 @@ class TelegramPoller:
         feed = await Feed.create(id=dialog.id, name=dialog.name)
 
         dialog_messages = await self._client.get_dialog_messages(
-            dialog=dialog, message_limit=message_limit
+            dialog=dialog, message_limit=self._message_limit
         )
         [feed_entries, feed_entries_media] = await self._process_new_dialog_messages(
             feed, dialog_messages
@@ -55,7 +61,9 @@ class TelegramPoller:
         [last_message] = await FeedEntry.filter(feed=feed).order_by("-date").limit(1)
 
         new_dialog_messages = await self._client.get_dialog_messages(
-            dialog=dialog, message_limit=message_limit, min_message_id=last_message.id
+            dialog=dialog,
+            message_limit=self._message_limit,
+            min_message_id=last_message.id,
         )
 
         [feed_entries, feed_entries_media] = await self._process_new_dialog_messages(
@@ -65,7 +73,7 @@ class TelegramPoller:
         await FeedEntry.bulk_create(feed_entries)
         await FeedEntry.bulk_create(feed_entries_media)
 
-        await FeedEntry.all().order_by("-date").offset(message_limit).delete()
+        await FeedEntry.all().order_by("-date").offset(self._message_limit).delete()
 
     async def _process_new_dialog_messages(
         self, feed: Feed, dialog_messages: list[custom.Message]
@@ -85,13 +93,19 @@ class TelegramPoller:
                 if last_processed_message.get("downloaded_media", None) is None:
                     last_processed_message.downloaded_media = []
 
-                media = await dialog_message.download_media()
-                last_processed_message.downloaded_media.append(media)
+                feed_entry_media_id = "{}-{}-{}".format(
+                    feed.id,
+                    dialog_message.id,
+                    len(last_processed_message.downloaded_media),
+                )
+                media_path = self._static_path.joinpath(feed_entry_media_id)
+                await dialog_message.download_media(file=media_path)
+                last_processed_message.downloaded_media.append(feed_entry_media_id)
 
         feed_entries: list[FeedEntry] = []
         feed_entries_media: list[FeedEntryMedia] = []
         for dialog_message in filtered_dialog_messages:
-            feed_entry_id = "{}/{}".format(feed.id, dialog_message.id)
+            feed_entry_id = "{}-{}".format(feed.id, dialog_message.id)
             feed_entries.append(
                 FeedEntry(
                     id=feed_entry_id,
@@ -101,7 +115,7 @@ class TelegramPoller:
                 )
             )
             for i, media in enumerate(dialog_message.get("downloaded_media", [])):
-                feed_entry_media_id = "{}/{}".format(feed_entry_id, i)
+                feed_entry_media_id = "{}-{}".format(feed_entry_id, i)
                 feed_entries_media.append(
                     FeedEntryMedia(
                         id=feed_entry_media_id,
