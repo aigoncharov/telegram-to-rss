@@ -4,6 +4,7 @@ from telegram_to_rss.client import TelegramToRssClient
 from telegram_to_rss.config import api_hash, api_id, session_path, password, static_path
 from telegram_to_rss.qr_code import get_qr_code_image
 from telegram_to_rss.storage import init_feeds_db
+from telegram_to_rss.generate_feed import generate_feed
 
 feeds_db = init_feeds_db()
 app = Quart(__name__, static_folder=static_path)
