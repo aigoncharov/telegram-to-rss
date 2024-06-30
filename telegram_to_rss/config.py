@@ -15,4 +15,4 @@ data_dir.mkdir(mode=0o600, parents=True, exist_ok=True)
 
 session_path = data_dir.joinpath("telegram_to-rss.session")
 static_path = data_dir.joinpath("/static").mkdir(mode=0o600, exist_ok=True)
-db_path = data_dir.joinpath("feed.db")
+db_path = data_dir.joinpath("feeds.db")

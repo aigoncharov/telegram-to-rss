@@ -1,4 +1,4 @@
-from telegram_to_rss.storage import Feed
+from telegram_to_rss.models import Feed
 from feedgen.feed import FeedGenerator
 from pathlib import Path
 
