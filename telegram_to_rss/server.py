@@ -1,10 +1,12 @@
 import asyncio
 from quart import Quart, render_template
 from telegram_to_rss.client import TelegramToRssClient
-from telegram_to_rss.config import api_hash, api_id, session_path, password
+from telegram_to_rss.config import api_hash, api_id, session_path, password, static_path
 from telegram_to_rss.qr_code import get_qr_code_image
+from telegram_to_rss.storage import init_feeds_db
 
-app = Quart(__name__)
+feeds_db = init_feeds_db()
+app = Quart(__name__, static_folder=static_path)
 client = TelegramToRssClient(
     session_path=session_path, api_id=api_id, api_hash=api_hash, password=password
 )
@@ -19,6 +21,7 @@ async def startup():
 @app.after_serving
 async def cleanup():
     await client.stop()
+    feeds_db.close()
 
 
 @app.route("/")
