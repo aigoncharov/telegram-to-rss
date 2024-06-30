@@ -9,4 +9,3 @@ class FeedEntry(Model):
     )
     message = fields.TextField()
     date = fields.DatetimeField()
-    grouped_id = fields.IntField(null=True)
