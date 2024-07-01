@@ -1,5 +1,5 @@
 from telegram_to_rss.client import TelegramToRssClient, custom
-from telegram_to_rss.models import Feed, FeedEntry, FeedEntryMedia
+from telegram_to_rss.models import Feed, FeedEntry
 from tortoise.expressions import Q
 from tortoise.transactions import atomic
 from pathlib import Path
@@ -103,7 +103,6 @@ class TelegramPoller:
                 last_processed_message.downloaded_media.append(feed_entry_media_id)
 
         feed_entries: list[FeedEntry] = []
-        feed_entries_media: list[FeedEntryMedia] = []
         for dialog_message in filtered_dialog_messages:
             feed_entry_id = "{}-{}".format(feed.id, dialog_message.id)
             feed_entries.append(
@@ -112,16 +111,8 @@ class TelegramPoller:
                     feed=feed,
                     message=dialog_message.message,
                     date=dialog_message.date,
+                    media=dialog_message.get("downloaded_media", []),
                 )
             )
-            for i, media in enumerate(dialog_message.get("downloaded_media", [])):
-                feed_entry_media_id = "{}-{}".format(feed_entry_id, i)
-                feed_entries_media.append(
-                    FeedEntryMedia(
-                        id=feed_entry_media_id,
-                        feed_entry_id=feed_entry_id,
-                        media=media,
-                    )
-                )
 
-        return (feed_entries, feed_entries_media)
+        return feed_entries
