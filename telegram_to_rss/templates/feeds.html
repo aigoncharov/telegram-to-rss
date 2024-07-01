@@ -11,7 +11,7 @@
     Logged in as {{ user.first_name }} {{ user.last_name }} ({{ user.username
     }}).
   </p>
-  <p>Give it a few minutes on first start to see fetch the data.</p>
+  <p>Give it a few minutes on first start to fetch the data.</p>
   <p>Available feeds:</p>
   <ul>
     {% for feed in feeds %}
@@ -23,9 +23,6 @@
     </li>
     {% else %}
     <p>No feeds available.</p>
-    <p>
-      Return in a few minutes if you just logged in. Otherwise, check the logs.
-    </p>
     {% endfor %}
   </ul>
 </div>
