@@ -5,7 +5,7 @@ from telegram_to_rss.consts import TELEGRAM_NOTIFICATIONS_DIALOG_ID
 class TelegramToRssClient:
     _telethon: TelegramClient
     _qr_code_url: str | None = None
-    _user: types.User | None = None
+    _user: types.User = None
     _password: str | None = None
 
     def __init__(

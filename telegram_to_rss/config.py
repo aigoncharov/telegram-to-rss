@@ -9,11 +9,14 @@ password = os.environ.get("TG_PASSWORD")
 update_interval_seconds = int(os.environ.get("UPDATE_INTERVAL") or 3600)
 message_limit = int(os.environ.get("MESSAGE_LIMIT") or 100)
 
-data_dir = Path(os.environ.get("DATA_DIR")) or Path(user_data_dir).joinpath(
-    "telegram_to_rss"
+data_dir = (
+    Path(os.environ.get("DATA_DIR"))
+    if os.environ.get("DATA_DIR")
+    else Path(user_data_dir()).joinpath("telegram_to_rss")
 )
-data_dir.mkdir(mode=0o600, parents=True, exist_ok=True)
-
 session_path = data_dir.joinpath("telegram_to-rss.session")
-static_path = data_dir.joinpath("/static").mkdir(mode=0o600, exist_ok=True)
+static_path = data_dir.joinpath("static")
 db_path = data_dir.joinpath("feeds.db")
+
+data_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+static_path.mkdir(mode=0o700, exist_ok=True)

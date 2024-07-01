@@ -37,65 +37,66 @@ class TelegramPoller:
 
         return (list(feed_ids_to_delete), feeds_to_create, feeds_to_update)
 
-    async def bulk_delete_feeds(ids: list[int]):
+    async def bulk_delete_feeds(self, ids: list[int]):
         if len(ids) != 0:
             await Feed.filter(Q(id__in=list(ids))).delete()
 
-    @atomic
+    @atomic()
     async def create_feed(self, dialog: custom.Dialog):
         feed = await Feed.create(id=dialog.id, name=dialog.name)
 
         dialog_messages = await self._client.get_dialog_messages(
             dialog=dialog, message_limit=self._message_limit
         )
-        [feed_entries, feed_entries_media] = await self._process_new_dialog_messages(
-            feed, dialog_messages
-        )
+        feed_entries = await self._process_new_dialog_messages(feed, dialog_messages)
 
         await FeedEntry.bulk_create(feed_entries)
-        await FeedEntry.bulk_create(feed_entries_media)
 
-    @atomic
+    @atomic()
     async def update_feed(self, dialog: custom.Dialog):
         feed = await Feed.get(id=dialog.id)
-        [last_message] = await FeedEntry.filter(feed=feed).order_by("-date").limit(1)
+        last_feed_entry = await FeedEntry.filter(feed=feed).order_by("-date").first()
 
+        [_, tg_message_id] = parse_feed_entry_id(last_feed_entry.id)
         new_dialog_messages = await self._client.get_dialog_messages(
             dialog=dialog,
             message_limit=self._message_limit,
-            min_message_id=last_message.id,
+            min_message_id=tg_message_id,
         )
 
-        [feed_entries, feed_entries_media] = await self._process_new_dialog_messages(
+        feed_entries = await self._process_new_dialog_messages(
             feed, new_dialog_messages
         )
 
         await FeedEntry.bulk_create(feed_entries)
-        await FeedEntry.bulk_create(feed_entries_media)
+        # Save even if unchanged to update date
+        await feed.save()
 
-        await FeedEntry.all().order_by("-date").offset(self._message_limit).delete()
+        old_feed_entries = (
+            await FeedEntry.all().offset(self._message_limit).order_by("-date")
+        )
+        await FeedEntry.filter(
+            Q(id__in=[entry.id for entry in old_feed_entries])
+        ).delete()
 
     async def _process_new_dialog_messages(
         self, feed: Feed, dialog_messages: list[custom.Message]
     ):
-        filtered_dialog_messages = []
+        filtered_dialog_messages: list[custom.Message] = []
         for dialog_message in dialog_messages:
-            last_processed_message = filtered_dialog_messages[-1]
+            dialog_message.downloaded_media = []
+
             if (
                 dialog_message.grouped_id is None
-                or last_processed_message is None
-                or dialog_message.grouped_id != last_processed_message.grouped_id
+                or len(filtered_dialog_messages) == 0
+                or dialog_message.grouped_id != filtered_dialog_messages[-1].grouped_id
             ):
                 filtered_dialog_messages.append(dialog_message)
 
             last_processed_message = filtered_dialog_messages[-1]
             if dialog_message.photo:
-                if last_processed_message.get("downloaded_media", None) is None:
-                    last_processed_message.downloaded_media = []
-
-                feed_entry_media_id = "{}-{}-{}".format(
-                    feed.id,
-                    dialog_message.id,
+                feed_entry_media_id = "{}-{}".format(
+                    to_feed_entry_id(feed, dialog_message),
                     len(last_processed_message.downloaded_media),
                 )
                 media_path = self._static_path.joinpath(feed_entry_media_id)
@@ -104,18 +105,27 @@ class TelegramPoller:
 
         feed_entries: list[FeedEntry] = []
         for dialog_message in filtered_dialog_messages:
-            feed_entry_id = "{}-{}".format(feed.id, dialog_message.id)
+            feed_entry_id = to_feed_entry_id(feed, dialog_message)
             feed_entries.append(
                 FeedEntry(
                     id=feed_entry_id,
                     feed=feed,
                     message=dialog_message.message,
                     date=dialog_message.date,
-                    media=dialog_message.get("downloaded_media", []),
+                    media=dialog_message.downloaded_media,
                 )
             )
 
         return feed_entries
+
+
+def to_feed_entry_id(feed: Feed, dialog_message: custom.Message):
+    return "{}--{}".format(feed.id, dialog_message.id)
+
+
+def parse_feed_entry_id(id: str):
+    [channel_id, message_id] = id.split("--")
+    return (int(channel_id), int(message_id))
 
 
 async def update_feeds_in_db(telegram_poller: TelegramPoller):

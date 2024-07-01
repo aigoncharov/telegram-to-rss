@@ -9,12 +9,16 @@ from telegram_to_rss.config import (
     static_path,
     message_limit,
     update_interval_seconds,
+    db_path,
 )
 from telegram_to_rss.qr_code import get_qr_code_image
 from telegram_to_rss.db import init_feeds_db, close_feeds_db
 from telegram_to_rss.generate_feed import update_feeds_cache
 from telegram_to_rss.poll_telegram import TelegramPoller, update_feeds_in_db
 from telegram_to_rss.models import Feed
+import logging
+
+# logging.basicConfig(level=logging.DEBUG)
 
 app = Quart(__name__, static_folder=static_path, static_url_path="/static")
 client = TelegramToRssClient(
@@ -29,13 +33,14 @@ update_rss_task: asyncio.Task | None = None
 async def start_rss_generation():
     global update_rss_task
 
-    async def update_rss():
+    async def update_rss(wait=True):
         global update_rss_task
+
+        if wait:
+            await asyncio.sleep(update_interval_seconds)
 
         await update_feeds_in_db(telegram_poller=telegram_poller)
         await update_feeds_cache(feed_render_dir=static_path)
-
-        await asyncio.sleep(update_interval_seconds)
 
         loop = asyncio.get_event_loop()
         update_rss_task = loop.create_task(update_rss())
@@ -43,13 +48,13 @@ async def start_rss_generation():
     await client.start()
 
     loop = asyncio.get_event_loop()
-    update_rss_task = loop.create_task(update_rss())
+    update_rss_task = loop.create_task(update_rss(wait=False))
     await update_rss_task
 
 
 @app.before_serving
 async def startup():
-    await init_feeds_db()
+    await init_feeds_db(db_path=db_path)
     is_authorized = await client.connect()
     if is_authorized:
         await start_rss_generation()
