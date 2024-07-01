@@ -10,8 +10,8 @@
     <li>
       <p>
         {{ feed.name }} ({{ feed.id }}) -
-        <a href="/{{ feed.id }}.rss.xml">rss</a> updated at {{ feed.last_update
-        }}
+        <a href="/static/{{ feed.id }}.rss.xml">rss</a> updated at {{
+        feed.last_update }}
       </p>
     </li>
     {% else %}

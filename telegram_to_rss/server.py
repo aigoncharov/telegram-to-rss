@@ -16,7 +16,7 @@ from telegram_to_rss.generate_feed import update_feeds_cache
 from telegram_to_rss.poll_telegram import TelegramPoller, update_feeds_in_db
 from telegram_to_rss.models import Feed
 
-app = Quart(__name__, static_folder=static_path)
+app = Quart(__name__, static_folder=static_path, static_url_path="/static")
 client = TelegramToRssClient(
     session_path=session_path, api_id=api_id, api_hash=api_hash, password=password
 )
