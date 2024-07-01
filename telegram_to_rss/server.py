@@ -27,14 +27,14 @@ client = TelegramToRssClient(
 telegram_poller = TelegramPoller(
     client=client, message_limit=message_limit, static_path=static_path
 )
-update_rss_task: asyncio.Task | None = None
+rss_task: asyncio.Task | None = None
 
 
 async def start_rss_generation():
-    global update_rss_task
+    global rss_task
 
     async def update_rss():
-        global update_rss_task
+        global rss_task
 
         await update_feeds_in_db(telegram_poller=telegram_poller)
         await update_feeds_cache(feed_render_dir=static_path)
@@ -42,30 +42,28 @@ async def start_rss_generation():
         await asyncio.sleep(update_interval_seconds)
 
         loop = asyncio.get_event_loop()
-        update_rss_task = loop.create_task(update_rss())
+        rss_task = loop.create_task(update_rss())
 
     await client.start()
 
     loop = asyncio.get_event_loop()
-    update_rss_task = loop.create_task(update_rss())
+    rss_task = loop.create_task(update_rss())
 
 
 @app.before_serving
 async def startup():
+    global rss_task
+
     await init_feeds_db(db_path=db_path)
-    is_authorized = await client.connect()
-    if is_authorized:
-        await start_rss_generation()
-    else:
-        loop = asyncio.get_event_loop()
-        loop.create_task(start_rss_generation())
+    loop = asyncio.get_event_loop()
+    rss_task = loop.create_task(start_rss_generation())
 
 
 @app.after_serving
 async def cleanup():
-    if update_rss_task is not None:
-        update_rss_task.cancel()
-    await client.disconnect()
+    if rss_task is not None:
+        rss_task.cancel()
+    await client.stop()
     await close_feeds_db()
 
 
