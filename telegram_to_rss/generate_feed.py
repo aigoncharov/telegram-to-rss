@@ -4,26 +4,53 @@ from quart import utils
 from telegram_to_rss.models import Feed, FeedEntry
 from tortoise.query_utils import Prefetch
 from shutil import copy
+from telegram_to_rss.config import base_url
+from telegram_to_rss.poll_telegram import parse_feed_entry_id
+import re
+
+CLEAN_TITLE = re.compile("<.*?>")
+
+
+def clean_title(raw_html):
+    cleantext = re.sub(CLEAN_TITLE, "", raw_html).replace("\n", " ")
+    return cleantext
 
 
 def generate_feed(feed_render_dir: Path, feed: Feed):
+    feed_id = "{}/static/{}.xml".format(base_url, feed.id)
+
     fg = FeedGenerator()
-    fg.id("tgrss://{}".format(feed.id))
+    fg.id(feed_id)
     fg.title(feed.name)
-    fg.lastBuildDate(feed.last_update)
-    fg.link(href="https://t.me/{}".format(feed.id))
+    fg.updated(feed.last_update)
+    fg.link(href=feed_id, rel="self")
     fg.description(feed.name)
 
     for feed_entry in feed.entries:
+        feed_entry_id = "https://t.me/c/{}/{}".format(
+            *parse_feed_entry_id(feed_entry.id)
+        )
+
         fe = fg.add_entry()
-        fe.id("tgrss://{}".format(feed_entry.id))
-        fe.content(feed_entry.message)
-        fe.published(feed_entry.date)
+        fe.id(feed_entry_id)
 
-    tmp_feed_file = feed_render_dir.joinpath("{}-tmp.rss.xml".format(feed.id))
-    fg.rss_file(tmp_feed_file)
+        message_text = clean_title(feed_entry.message).strip()
+        title = message_text[:100]
+        fe.title(title)
 
-    final_feed_file = feed_render_dir.joinpath("{}.rss.xml".format(feed.id))
+        images = ""
+        for media_path in feed_entry.media:
+            media_url = "{}/static/{}".format(base_url, media_path)
+            images += '<br /><img src="{}"/>'.format(media_url)
+
+        fe.content(feed_entry.message.replace("\n", "<br />") + images)
+        fe.updated(feed_entry.date)
+        fe.link(href=feed_entry_id, rel="alternate")
+
+    tmp_feed_file = feed_render_dir.joinpath("{}-tmp.xml".format(feed.id))
+    fg.atom_file(tmp_feed_file)
+
+    final_feed_file = feed_render_dir.joinpath("{}.xml".format(feed.id))
     copy(tmp_feed_file, final_feed_file)
     Path.unlink(tmp_feed_file)
 

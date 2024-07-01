@@ -117,13 +117,18 @@ version = "1.0.0"
 description = "Feed Generator (ATOM, RSS, Podcasts)"
 optional = false
 python-versions = "*"
-files = [
-    {file = "feedgen-1.0.0.tar.gz", hash = "sha256:d9bd51c3b5e956a2a52998c3708c4d2c729f2fcc311188e1e5d3b9726393546a"},
-]
+files = []
+develop = false
 
 [package.dependencies]
 lxml = "*"
 python-dateutil = "*"
+
+[package.source]
+type = "git"
+url = "https://github.com/aigoncharov/python-feedgen"
+reference = "patch-1"
+resolved_reference = "cd14b1008b93bdd6ffbf02d324a0fb1e86d0ab3f"
 
 [[package]]
 name = "flake8"
@@ -956,4 +961,4 @@ h11 = ">=0.9.0,<1"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "f18c873da8ad776d5de986b9e792c9bdd34334c12fc6fe4b99031a707d0692d8"
+content-hash = "4ea021cf913af347c00a8021dda9a2aab4ecb43188ac747fb68665bf6b2faaf1"

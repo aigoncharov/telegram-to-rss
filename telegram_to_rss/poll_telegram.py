@@ -93,6 +93,13 @@ class TelegramPoller:
             ):
                 filtered_dialog_messages.append(dialog_message)
 
+            if (
+                len(filtered_dialog_messages) != 0
+                and dialog_message.grouped_id == filtered_dialog_messages[-1].grouped_id
+                and len(dialog_message.text) > len(filtered_dialog_messages[-1].text)
+            ):
+                filtered_dialog_messages[-1].text = dialog_message.text
+
             last_processed_message = filtered_dialog_messages[-1]
             if dialog_message.photo:
                 feed_entry_media_id = "{}-{}".format(
@@ -100,8 +107,8 @@ class TelegramPoller:
                     len(last_processed_message.downloaded_media),
                 )
                 media_path = self._static_path.joinpath(feed_entry_media_id)
-                await dialog_message.download_media(file=media_path)
-                last_processed_message.downloaded_media.append(feed_entry_media_id)
+                res_path = await dialog_message.download_media(file=media_path)
+                last_processed_message.downloaded_media.append(Path(res_path).name)
 
         feed_entries: list[FeedEntry] = []
         for dialog_message in filtered_dialog_messages:
@@ -110,7 +117,7 @@ class TelegramPoller:
                 FeedEntry(
                     id=feed_entry_id,
                     feed=feed,
-                    message=dialog_message.message,
+                    message=dialog_message.text,
                     date=dialog_message.date,
                     media=dialog_message.downloaded_media,
                 )

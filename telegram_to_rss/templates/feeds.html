@@ -1,9 +1,9 @@
 {% extends "base.html" %} {% block head %} {% for feed in feeds %}
 <link
   rel="alternate"
-  type="application/rss+xml"
+  type="application/atom+xml"
   title="{{ feed.name }}"
-  href="/static/{{ feed.id }}.rss.xml"
+  href="/static/{{ feed.id }}.xml"
 />
 {% endfor %} {% endblock %} {% block content %}
 <div>
@@ -17,7 +17,7 @@
     {% for feed in feeds %}
     <li>
       <p>
-        <a href="/static/{{ feed.id }}.rss.xml">{{ feed.name }}</a>
+        <a href="/static/{{ feed.id }}.xml">{{ feed.name }}</a>
       </p>
       <p>Last update: {{ feed.last_update }}</p>
     </li>
@@ -26,7 +26,4 @@
     {% endfor %}
   </ul>
 </div>
-<script>
-  setTimeout(() => window.location.reload(), 5000);
-</script>
 {% endblock %}

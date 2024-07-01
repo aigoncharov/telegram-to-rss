@@ -14,6 +14,7 @@ class TelegramToRssClient:
         self._telethon = TelegramClient(
             session=session_path, api_id=api_id, api_hash=api_hash
         )
+        self._telethon.parse_mode = "html"
         self._password = password
 
     async def start(self):

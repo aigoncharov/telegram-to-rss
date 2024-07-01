@@ -11,11 +11,11 @@ packages = [{include = "telegram_to_rss"}]
 python = "^3.12"
 Telethon = "^1.36.0"
 quart = "^0.19.6"
-feedgen = "^1.0.0"
 qrcode = "^7.4.2"
 platformdirs = "^4.2.2"
 tortoise-orm = "^0.21.3"
 anyio = "^4.4.0"
+feedgen = {git = "https://github.com/aigoncharov/python-feedgen", rev = "patch-1"}
 
 
 [tool.poetry.group.dev.dependencies]
