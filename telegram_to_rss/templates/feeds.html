@@ -1,4 +1,11 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %} {% block head %} {% for feed in feeds %}
+<link
+  rel="alternate"
+  type="application/rss+xml"
+  title="{{ feed.name }}"
+  href="/static/{{ feed.id }}.rss.xml"
+/>
+{% endfor %} {% endblock %} {% block content %}
 <div>
   <p>
     Logged in as {{ user.first_name }} {{ user.last_name }} ({{ user.username

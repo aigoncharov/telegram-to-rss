@@ -33,14 +33,13 @@ update_rss_task: asyncio.Task | None = None
 async def start_rss_generation():
     global update_rss_task
 
-    async def update_rss(wait=True):
+    async def update_rss():
         global update_rss_task
-
-        if wait:
-            await asyncio.sleep(update_interval_seconds)
 
         await update_feeds_in_db(telegram_poller=telegram_poller)
         await update_feeds_cache(feed_render_dir=static_path)
+
+        await asyncio.sleep(update_interval_seconds)
 
         loop = asyncio.get_event_loop()
         update_rss_task = loop.create_task(update_rss())
@@ -48,8 +47,7 @@ async def start_rss_generation():
     await client.start()
 
     loop = asyncio.get_event_loop()
-    update_rss_task = loop.create_task(update_rss(wait=False))
-    await update_rss_task
+    update_rss_task = loop.create_task(update_rss())
 
 
 @app.before_serving
