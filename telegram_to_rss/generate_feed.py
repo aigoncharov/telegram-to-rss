@@ -12,7 +12,7 @@ CLEAN_TITLE = re.compile("<.*?>")
 
 
 def clean_title(raw_html):
-    cleantext = re.sub(CLEAN_TITLE, "", raw_html).replace("\n", " ")
+    cleantext = re.sub(CLEAN_TITLE, "", raw_html).replace("\n", " ").strip()
     return cleantext
 
 
@@ -34,7 +34,7 @@ def generate_feed(feed_render_dir: Path, feed: Feed):
         fe = fg.add_entry()
         fe.id(feed_entry_id)
 
-        message_text = clean_title(feed_entry.message).strip()
+        message_text = clean_title(feed_entry.message)
         title = message_text[:100]
         fe.title(title)
 
