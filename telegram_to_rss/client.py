@@ -16,8 +16,12 @@ class TelegramToRssClient:
         )
         self._password = password
 
-    async def start(self):
+    async def connect(self):
         await self._telethon.connect()
+        is_authorized = await self._telethon.is_user_authorized()
+        return is_authorized
+
+    async def start(self):
         is_authorized = await self._telethon.is_user_authorized()
 
         if not is_authorized:
@@ -35,7 +39,7 @@ class TelegramToRssClient:
         self._qr_code_url = None
         self._user = await self._telethon.get_me()
 
-    async def stop(self):
+    async def disconnect(self):
         if self._telethon.is_connected():
             await self._telethon.disconnect()
 

@@ -116,3 +116,17 @@ class TelegramPoller:
             )
 
         return feed_entries
+
+
+async def update_feeds_in_db(telegram_poller: TelegramPoller):
+    [feed_ids_to_delete, feeds_to_create, feeds_to_update] = (
+        await telegram_poller.fetch_dialogs()
+    )
+
+    await telegram_poller.bulk_delete_feeds(feed_ids_to_delete)
+
+    for feed_to_create in feeds_to_create:
+        await telegram_poller.create_feed(feed_to_create)
+
+    for feed_to_update in feeds_to_update:
+        await telegram_poller.update_feed(feed_to_update)

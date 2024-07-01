@@ -1,5 +1,7 @@
 from feedgen.feed import FeedGenerator
 from pathlib import Path
+from quart import utils
+from telegram_to_rss.models import Feed
 
 
 def generate_feed(feed_render_dir: Path, feed):
@@ -14,5 +16,12 @@ def generate_feed(feed_render_dir: Path, feed):
         fe.content(feed_entry.message)
         fe.published(feed_entry.date)
 
-    feed_file = feed_render_dir.joinpath("rss_{}.xml".format(feed.id))
+    feed_file = feed_render_dir.joinpath("{}.rss.xml".format(feed.id))
     fg.rss_file(feed_file)
+
+
+async def update_feeds_cache(feed_render_dir: str):
+    feeds = await Feed.all()
+    for feed in feeds:
+        await feed.fetch_related("entries")
+        await utils.run_sync(generate_feed)(feed_render_dir, feed)

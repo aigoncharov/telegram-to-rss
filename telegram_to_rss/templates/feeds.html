@@ -8,10 +8,17 @@
   <ul>
     {% for feed in feeds %}
     <li>
-      <p>{{ feed.name }} ({{ feed.id }})</p>
+      <p>
+        {{ feed.name }} ({{ feed.id }}) -
+        <a href="/{{ feed.id }}.rss.xml">rss</a> updated at {{ feed.last_update
+        }}
+      </p>
     </li>
     {% else %}
-    <p>No feeds available</p>
+    <p>No feeds available.</p>
+    <p>
+      Return in a few minutes if you just logged in. Otherwise, check the logs.
+    </p>
     {% endfor %}
   </ul>
 </div>
