@@ -32,9 +32,9 @@ Coming soon
 
 ## Configuration
 
-Available environment variables (* marks required ones):
-- * `TG_API_ID` - api_id from https://my.telegram.org  
-- * `TG_API_HASH` - api_hash from https://my.telegram.org
+Available environment variables (\* marks required ones):
+- \* `TG_API_ID` - api_id from https://my.telegram.org  
+- \* `TG_API_HASH` - api_hash from https://my.telegram.org
 - `TG_PASSWORD` - your telegram password, required if 2fa is enabled on the account
 - `BASE_URL` - address of your server that hosts this app, used in RSS feeds to correctly set image addresses
 - `BIND` - `host:port` to bind to on the server. Default: `127.0.0.1:5000`
