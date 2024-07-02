@@ -35,8 +35,8 @@ Coming soon
 Available environment variables (\* marks required ones):
 - \* `TG_API_ID` - api_id from https://my.telegram.org  
 - \* `TG_API_HASH` - api_hash from https://my.telegram.org
+- \* `BASE_URL` - address of your server that hosts this app, used in RSS feeds to correctly set image addresses
 - `TG_PASSWORD` - your telegram password, required if 2fa is enabled on the account
-- `BASE_URL` - address of your server that hosts this app, used in RSS feeds to correctly set image addresses
 - `BIND` - `host:port` to bind to on the server. Default: `127.0.0.1:5000`
 - `LOGLEVEL` - log level for the app ([supported values](https://docs.python.org/3/library/logging.html#logging-levels)). Default: `INFO`
 - `DATA_DIR` - path to store the database, RSS feeds and other static files. Default: `user_data_dir` from [platformdirs](https://github.com/platformdirs/platformdirs?tab=readme-ov-file#platformdirs-to-the-rescue)
