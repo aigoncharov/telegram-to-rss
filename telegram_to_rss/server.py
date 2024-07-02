@@ -10,6 +10,7 @@ from telegram_to_rss.config import (
     message_limit,
     update_interval_seconds,
     db_path,
+    loglevel,
 )
 from telegram_to_rss.qr_code import get_qr_code_image
 from telegram_to_rss.db import init_feeds_db, close_feeds_db
@@ -17,6 +18,8 @@ from telegram_to_rss.generate_feed import update_feeds_cache
 from telegram_to_rss.poll_telegram import TelegramPoller, update_feeds_in_db
 from telegram_to_rss.models import Feed
 import logging
+
+logging.basicConfig(level=loglevel)
 
 app = Quart(__name__, static_folder=static_path, static_url_path="/static")
 client = TelegramToRssClient(
