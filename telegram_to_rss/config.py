@@ -9,6 +9,7 @@ password = os.environ.get("TG_PASSWORD")
 update_interval_seconds = int(os.environ.get("UPDATE_INTERVAL") or 3600)
 message_limit = int(os.environ.get("MESSAGE_LIMIT") or 100)
 base_url = os.environ.get("BASE_URL")
+bind = os.environ.get("BIND") or "127.0.0.1:5000"
 
 loglevel = os.environ.get("LOGLEVEL", "INFO").upper()
 

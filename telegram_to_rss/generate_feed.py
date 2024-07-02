@@ -7,6 +7,7 @@ from shutil import copy
 from telegram_to_rss.config import base_url
 from telegram_to_rss.poll_telegram import parse_feed_entry_id
 import re
+from telegram_to_rss.client import telethon_dialog_id_to_tg_id
 
 CLEAN_TITLE = re.compile("<.*?>")
 
@@ -27,8 +28,9 @@ def generate_feed(feed_render_dir: Path, feed: Feed):
     fg.description(feed.name)
 
     for feed_entry in feed.entries:
+        [feed_id, entry_id] = parse_feed_entry_id(feed_entry.id)
         feed_entry_id = "https://t.me/c/{}/{}".format(
-            *parse_feed_entry_id(feed_entry.id)
+            telethon_dialog_id_to_tg_id(feed_id), entry_id
         )
 
         fe = fg.add_entry()
@@ -48,7 +50,7 @@ def generate_feed(feed_render_dir: Path, feed: Feed):
         fe.link(href=feed_entry_id, rel="alternate")
 
     tmp_feed_file = feed_render_dir.joinpath("{}-tmp.xml".format(feed.id))
-    fg.atom_file(tmp_feed_file)
+    fg.rss_file(tmp_feed_file)
 
     final_feed_file = feed_render_dir.joinpath("{}.xml".format(feed.id))
     copy(tmp_feed_file, final_feed_file)

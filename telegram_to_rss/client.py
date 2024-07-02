@@ -1,5 +1,6 @@
 from telethon import TelegramClient, types, errors, custom
 from telegram_to_rss.consts import TELEGRAM_NOTIFICATIONS_DIALOG_ID
+from telethon.utils import resolve_id
 
 
 class TelegramToRssClient:
@@ -67,3 +68,7 @@ class TelegramToRssClient:
     @property
     def user(self):
         return self._user
+
+
+def telethon_dialog_id_to_tg_id(id: int):
+    return resolve_id(id)[0]

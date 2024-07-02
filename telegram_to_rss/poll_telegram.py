@@ -1,4 +1,7 @@
-from telegram_to_rss.client import TelegramToRssClient, custom
+from telegram_to_rss.client import (
+    TelegramToRssClient,
+    custom,
+)
 from telegram_to_rss.models import Feed, FeedEntry
 from tortoise.expressions import Q
 from tortoise.transactions import atomic

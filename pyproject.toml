@@ -16,7 +16,7 @@ platformdirs = "^4.2.2"
 tortoise-orm = "^0.21.3"
 anyio = "^4.4.0"
 feedgen = {git = "https://github.com/aigoncharov/python-feedgen", rev = "patch-1"}
-
+hypercorn = "^0.17.3"
 
 [tool.poetry.group.dev.dependencies]
 flake8 = "^7.1.0"
@@ -31,3 +31,6 @@ extend-ignore = "E203,E501,E701"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[tool.poetry.scripts]
+telegram_to_rss = "telegram_to_rss:main"
