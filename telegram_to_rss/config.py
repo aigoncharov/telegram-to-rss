@@ -9,8 +9,6 @@ password = os.environ.get("TG_PASSWORD")
 update_interval_seconds = int(os.environ.get("UPDATE_INTERVAL") or 3600)
 message_limit = int(os.environ.get("MESSAGE_LIMIT") or 100)
 base_url = os.environ.get("BASE_URL")
-host = os.environ.get("HOST") or "127.0.0.1"
-port = int(os.environ.get("PORT") or 5001)
 
 data_dir = (
     Path(os.environ.get("DATA_DIR"))
