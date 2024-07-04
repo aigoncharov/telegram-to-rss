@@ -1,23 +1,27 @@
-from telegram_to_rss.client import (
-    TelegramToRssClient,
-    custom,
-)
+from telegram_to_rss.client import TelegramToRssClient, custom, types
 from telegram_to_rss.models import Feed, FeedEntry
 from tortoise.expressions import Q
 from tortoise.transactions import atomic
 from pathlib import Path
+import logging
 
 
 class TelegramPoller:
     _client: TelegramToRssClient
     _message_limit: int
+    _poll_batch_size: int
     _static_path: Path
 
     def __init__(
-        self, client: TelegramToRssClient, message_limit: int, static_path: Path
+        self,
+        client: TelegramToRssClient,
+        message_limit: int,
+        poll_batch_size: int,
+        static_path: Path,
     ) -> None:
         self._client = client
         self._message_limit = message_limit
+        self._poll_batch_size = poll_batch_size
         self._static_path = static_path
 
     async def fetch_dialogs(self):
@@ -46,13 +50,18 @@ class TelegramPoller:
 
     @atomic()
     async def create_feed(self, dialog: custom.Dialog):
+        logging.debug("TelegramPoller.create_feed %s %s", dialog.name, dialog.id)
+
         feed = await Feed.create(id=dialog.id, name=dialog.name)
 
+        logging.debug("TelegramPoller.create_feed -> get_dialog_messages")
         dialog_messages = await self._client.get_dialog_messages(
-            dialog=dialog, message_limit=self._message_limit
+            dialog=dialog, limit=self._poll_batch_size
         )
+        logging.debug("TelegramPoller.create_feed -> _process_new_dialog_messages")
         feed_entries = await self._process_new_dialog_messages(feed, dialog_messages)
 
+        logging.debug("TelegramPoller.create_feed -> bulk_create")
         await FeedEntry.bulk_create(feed_entries)
 
     @atomic()
@@ -63,7 +72,7 @@ class TelegramPoller:
         [_, tg_message_id] = parse_feed_entry_id(last_feed_entry.id)
         new_dialog_messages = await self._client.get_dialog_messages(
             dialog=dialog,
-            message_limit=self._message_limit,
+            limit=self._poll_batch_size,
             min_message_id=tg_message_id,
         )
 
@@ -87,6 +96,17 @@ class TelegramPoller:
     ):
         filtered_dialog_messages: list[custom.Message] = []
         for dialog_message in dialog_messages:
+            logging.debug(
+                "TelegramPoller._process_new_dialog_messages -> processing message %s %s %s %s",
+                dialog_message.id,
+                dialog_message.grouped_id,
+                dialog_message.photo is not None,
+                dialog_message.text,
+            )
+
+            if dialog_message.text is None:
+                continue
+
             dialog_message.downloaded_media = []
 
             if (
@@ -110,7 +130,18 @@ class TelegramPoller:
                     len(last_processed_message.downloaded_media),
                 )
                 media_path = self._static_path.joinpath(feed_entry_media_id)
-                res_path = await dialog_message.download_media(file=media_path)
+
+                def progress_callback(current, total, media_path=media_path):
+                    logging.debug(
+                        "TelegramPoller._process_new_dialog_messages -> downloading media %s: %s out of %s",
+                        media_path,
+                        current,
+                        total,
+                    )
+
+                res_path = await dialog_message.download_media(
+                    file=media_path, progress_callback=progress_callback
+                )
                 last_processed_message.downloaded_media.append(Path(res_path).name)
 
         feed_entries: list[FeedEntry] = []
@@ -123,6 +154,8 @@ class TelegramPoller:
                     message=dialog_message.text,
                     date=dialog_message.date,
                     media=dialog_message.downloaded_media,
+                    has_unsupported_media=dialog_message.media is not None
+                    and not isinstance(dialog_message.media, types.MessageMediaPhoto),
                 )
             )
 
@@ -139,14 +172,35 @@ def parse_feed_entry_id(id: str):
 
 
 async def update_feeds_in_db(telegram_poller: TelegramPoller):
+    logging.debug("update_feeds_in_db")
+
     [feed_ids_to_delete, feeds_to_create, feeds_to_update] = (
         await telegram_poller.fetch_dialogs()
     )
+    logging.debug(
+        "update_feeds_in_db -> fetched dialogs %s %s %s",
+        feed_ids_to_delete,
+        [dialog.id for dialog in feeds_to_create],
+        [dialog.id for dialog in feeds_to_update],
+    )
 
     await telegram_poller.bulk_delete_feeds(feed_ids_to_delete)
+    logging.debug("update_feeds_in_db -> deleted feeds %s", feed_ids_to_delete)
 
     for feed_to_create in feeds_to_create:
+        logging.debug(
+            "update_feeds_in_db.create_feed %s %s",
+            feed_to_create.id,
+            feed_to_create.name,
+        )
         await telegram_poller.create_feed(feed_to_create)
+        logging.debug("update_feeds_in_db.create_feed -> done")
 
     for feed_to_update in feeds_to_update:
+        logging.debug(
+            "update_feeds_in_db.update_feed %s %s",
+            feed_to_create.id,
+            feed_to_create.name,
+        )
         await telegram_poller.update_feed(feed_to_update)
+        logging.debug("update_feeds_in_db.create_feed -> done")

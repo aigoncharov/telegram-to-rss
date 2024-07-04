@@ -15,6 +15,7 @@ class FeedEntry(Model):
     message = fields.TextField()
     date = fields.DatetimeField()
     media = fields.JSONField(default=[])
+    has_unsupported_media = fields.BooleanField(default=False)
 
 
 @post_delete

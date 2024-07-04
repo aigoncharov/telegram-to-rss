@@ -15,9 +15,9 @@ qrcode = "^7.4.2"
 platformdirs = "^4.2.2"
 tortoise-orm = "^0.21.3"
 anyio = "^4.4.0"
-feedgen = {git = "https://github.com/aigoncharov/python-feedgen", rev = "patch-1"}
 hypercorn = "^0.17.3"
 
+cryptg = "^0.4.0"
 [tool.poetry.group.dev.dependencies]
 flake8 = "^7.1.0"
 flake8-bugbear = "^24.4.26"

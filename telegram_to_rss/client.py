@@ -54,10 +54,10 @@ class TelegramToRssClient:
         return filtered_dialogs
 
     async def get_dialog_messages(
-        self, dialog: custom.Dialog, message_limit: int = 1, min_message_id: int = 0
+        self, dialog: custom.Dialog, limit: int = 1, min_message_id: int = 0
     ) -> list[custom.Message]:
         messages = await self._telethon.get_messages(
-            dialog, limit=message_limit, min_id=min_message_id
+            dialog, limit=limit, min_id=min_message_id
         )
         return messages
 

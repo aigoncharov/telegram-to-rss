@@ -7,7 +7,8 @@ from telegram_to_rss.config import (
     session_path,
     password,
     static_path,
-    message_limit,
+    feed_size_limit,
+    poll_batch_size,
     update_interval_seconds,
     db_path,
     loglevel,
@@ -26,7 +27,10 @@ client = TelegramToRssClient(
     session_path=session_path, api_id=api_id, api_hash=api_hash, password=password
 )
 telegram_poller = TelegramPoller(
-    client=client, message_limit=message_limit, static_path=static_path
+    client=client,
+    message_limit=feed_size_limit,
+    poll_batch_size=poll_batch_size,
+    static_path=static_path,
 )
 rss_task: asyncio.Task | None = None
 

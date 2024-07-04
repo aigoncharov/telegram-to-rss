@@ -7,7 +7,8 @@ api_hash = os.environ.get("TG_API_HASH")
 password = os.environ.get("TG_PASSWORD")
 
 update_interval_seconds = int(os.environ.get("UPDATE_INTERVAL") or 3600)
-message_limit = int(os.environ.get("MESSAGE_LIMIT") or 100)
+feed_size_limit = int(os.environ.get("FEED_SIZE") or 100)
+poll_batch_size = int(os.environ.get("POLL_BATCH_SIZE") or 20)
 base_url = os.environ.get("BASE_URL")
 bind = os.environ.get("BIND") or "127.0.0.1:5000"
 
