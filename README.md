@@ -18,22 +18,22 @@ Generate an RSS feed from your Telegram chats. You digital minimalism friend.
 2. Create a docker compose file and replace the environment variables (see [Configuration](#configuration) for details)
    ```yaml
    services:
-   telegram-to-rss:
-      image: aigoncharov/telegram-to-rss:latest
-      container_name: telegram-to-rss
-      restart: always
-      environment:
-         - TG_API_ID=REPLACE_ME
-         - TG_API_HASH=REPLACE_ME
-         - TG_PASSWORD=REPLACE_ME
-         - BASE_URL=REPLACE_ME
-      ports:
-         - 3042:3042
-      volumes:
-         - telegram-to-rss-data:/data
+      telegram-to-rss:
+         image: aigoncharov/telegram-to-rss:latest
+         container_name: telegram-to-rss
+         restart: always
+         environment:
+            - TG_API_ID=REPLACE_ME
+            - TG_API_HASH=REPLACE_ME
+            - TG_PASSWORD=REPLACE_ME
+            - BASE_URL=REPLACE_ME
+         ports:
+            - 3042:3042
+         volumes:
+            - telegram-to-rss-data:/data
 
    volumes:
-   telegram-to-rss-data: null
+      telegram-to-rss-data: null
 
    networks: {}
    ```
