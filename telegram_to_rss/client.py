@@ -1,6 +1,7 @@
 from telethon import TelegramClient, types, errors, custom
 from telegram_to_rss.consts import TELEGRAM_NOTIFICATIONS_DIALOG_ID
 from telethon.utils import resolve_id
+from telegram_to_rss.consts import MESSAGE_FETCH_HARD_LIMIT
 
 
 class TelegramToRssClient:
@@ -54,11 +55,18 @@ class TelegramToRssClient:
         return filtered_dialogs
 
     async def get_dialog_messages(
-        self, dialog: custom.Dialog, limit: int = 1, min_message_id: int = 0
+        self,
+        dialog: custom.Dialog,
+        limit: int = MESSAGE_FETCH_HARD_LIMIT,
+        min_message_id: int = 0,
     ) -> list[custom.Message]:
-        messages = await self._telethon.get_messages(
+        limit = min(MESSAGE_FETCH_HARD_LIMIT, limit)
+
+        messages: list[custom.Message] = []
+        async for message in self._telethon.iter_messages(
             dialog, limit=limit, min_id=min_message_id
-        )
+        ):
+            message.append(message)
         return messages
 
     @property

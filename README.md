@@ -72,5 +72,5 @@ Available environment variables (\* marks required ones):
 - `LOGLEVEL` - log level for the app ([supported values](https://docs.python.org/3/library/logging.html#logging-levels)). Default: `INFO`
 - `DATA_DIR` - path to store the database, RSS feeds and other static files. Default: `user_data_dir` from [platformdirs](https://github.com/platformdirs/platformdirs?tab=readme-ov-file#platformdirs-to-the-rescue)
 - `FEED_SIZE` - size of the RSS feed. When your RSS feed grows larger than the limit, older entries are going to be discarded. Default: 200.
-- `POLL_BATCH_SIZE` - how many messages we fetch from Telegram every `UPDATE_INTERVAL` seconds. Also a number of items we fetch for any new feed. Might behave weirdly with the values over 100. Could be improved by iterating through Telegram API calls in multiple batches, but I never got to it. You know, 20% effort - 80% result :palm_tree: :sunny: :tropical_drink: Default value: 50.
+- `INITIAL_FEED_SIZE` - number of messages we fetch for any new feed on the first run. Default value: 50.
 - `UPDATE_INTERVAL` - how often the app should fetch new messages from Telegram and regenerate RSS feeds (in seconds). Default: 3600.

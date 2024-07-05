@@ -9,19 +9,19 @@ import logging
 class TelegramPoller:
     _client: TelegramToRssClient
     _message_limit: int
-    _poll_batch_size: int
+    _new_feed_limit: int
     _static_path: Path
 
     def __init__(
         self,
         client: TelegramToRssClient,
         message_limit: int,
-        poll_batch_size: int,
+        new_feed_limit: int,
         static_path: Path,
     ) -> None:
         self._client = client
         self._message_limit = message_limit
-        self._poll_batch_size = poll_batch_size
+        self._new_feed_limit = new_feed_limit
         self._static_path = static_path
 
     async def fetch_dialogs(self):
@@ -56,7 +56,7 @@ class TelegramPoller:
 
         logging.debug("TelegramPoller.create_feed -> get_dialog_messages")
         dialog_messages = await self._client.get_dialog_messages(
-            dialog=dialog, limit=self._poll_batch_size
+            dialog=dialog, limit=self._new_feed_limit
         )
         logging.debug("TelegramPoller.create_feed -> _process_new_dialog_messages")
         feed_entries = await self._process_new_dialog_messages(feed, dialog_messages)
@@ -72,7 +72,6 @@ class TelegramPoller:
         [_, tg_message_id] = parse_feed_entry_id(last_feed_entry.id)
         new_dialog_messages = await self._client.get_dialog_messages(
             dialog=dialog,
-            limit=self._poll_batch_size,
             min_message_id=tg_message_id,
         )
 

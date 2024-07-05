@@ -8,7 +8,7 @@ password = os.environ.get("TG_PASSWORD")
 
 update_interval_seconds = int(os.environ.get("UPDATE_INTERVAL") or 3600)
 feed_size_limit = int(os.environ.get("FEED_SIZE") or 200)
-poll_batch_size = int(os.environ.get("POLL_BATCH_SIZE") or 50)
+initial_feed_size = int(os.environ.get("INITIAL_FEED_SIZE") or 50)
 base_url = os.environ.get("BASE_URL")
 bind = os.environ.get("BIND") or "127.0.0.1:3042"
 
