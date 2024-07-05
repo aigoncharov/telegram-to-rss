@@ -25,7 +25,7 @@ jobs:
       - name: Build tag and latest
         uses: docker/build-push-action@v5
         with:
-          context: .
+          context: docker
           push: true
           tags: |
             aigoncharov/telegram-to-rss:latest
