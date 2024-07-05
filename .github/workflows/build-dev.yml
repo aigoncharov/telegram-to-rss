@@ -1,15 +1,16 @@
-name: Build Docker images tag
+name: Build Docker image dev
 on:
   push:
-    # Run pipeline for release tags
-    tags:
-      - "v*.*.*"
+    # Run pipeline for commits on branch main
+    branches:
+      - "main"
+      - "!testing/**"
+      - "!feature/**"
+      - "!hotfix/**"
 
 jobs:
-  build-tag:
+  build-dev:
     runs-on: [ubuntu-22.04]
-    # Only run on pushed tags (and explicitely ignore scheduled runs)
-    if: github.event_name == 'push' && contains(github.ref, 'refs/tags/') && github.event_name != 'schedule'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -22,12 +23,10 @@ jobs:
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Build tag and latest
+      - name: Build and push dev
         uses: docker/build-push-action@v5
         with:
           file: docker/Dockerfile
           push: true
-          tags: |
-            aigoncharov/telegram-to-rss:latest
-            aigoncharov/telegram-to-rss:${{github.ref_name}}
+          tags: aigoncharov/telegram-to-rss:dev
           platforms: linux/amd64,linux/arm64,linux/arm/v7

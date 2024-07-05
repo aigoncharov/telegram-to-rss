@@ -23,6 +23,7 @@ flake8 = "^7.1.0"
 flake8-bugbear = "^24.4.26"
 flake8-pyproject = "^1.2.3"
 
+pre-commit = "^3.7.1"
 [tool.flake8]
 max-line-length = 88
 extend-select = "B950"

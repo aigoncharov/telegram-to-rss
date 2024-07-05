@@ -10,7 +10,7 @@ update_interval_seconds = int(os.environ.get("UPDATE_INTERVAL") or 3600)
 feed_size_limit = int(os.environ.get("FEED_SIZE") or 200)
 poll_batch_size = int(os.environ.get("POLL_BATCH_SIZE") or 50)
 base_url = os.environ.get("BASE_URL")
-bind = os.environ.get("BIND") or "127.0.0.1:5000"
+bind = os.environ.get("BIND") or "127.0.0.1:3042"
 
 loglevel = os.environ.get("LOGLEVEL", "INFO").upper()
 

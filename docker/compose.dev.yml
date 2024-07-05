@@ -1,0 +1,19 @@
+services:
+  telegram-to-rss:
+    build:
+      context: ../
+      dockerfile: ./docker/Dockerfile
+      tags:
+        - "telegram-to-rss:dev"
+    container_name: telegram-to-rss
+    restart: always
+    env_file: ../.env
+    ports:
+      - 3042:3042
+    volumes:
+      - telegram-to-rss-data:/data
+
+volumes:
+  telegram-to-rss-data: null
+
+networks: {}
