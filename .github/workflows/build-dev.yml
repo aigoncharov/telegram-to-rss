@@ -26,6 +26,7 @@ jobs:
       - name: Build and push dev
         uses: docker/build-push-action@v5
         with:
+          context: .
           file: docker/Dockerfile
           push: true
           tags: aigoncharov/telegram-to-rss:dev
