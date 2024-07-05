@@ -30,10 +30,10 @@ Generate an RSS feed from your Telegram chats. You digital minimalism friend.
          ports:
             - 3042:3042
          volumes:
-            - telegram-to-rss-data:/data
+            - data:/data
 
    volumes:
-      telegram-to-rss-data: null
+      data: null
 
    networks: {}
    ```

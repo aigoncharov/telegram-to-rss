@@ -11,9 +11,9 @@ services:
     ports:
       - 3042:3042
     volumes:
-      - telegram-to-rss-data:/data
+      - data:/data
 
 volumes:
-  telegram-to-rss-data: null
+  data: null
 
 networks: {}
