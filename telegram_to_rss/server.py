@@ -43,17 +43,23 @@ async def start_rss_generation():
     async def update_rss():
         global rss_task
 
-        logging.info("update_rss -> db")
-        await update_feeds_in_db(telegram_poller=telegram_poller)
+        try:
+            logging.info("update_rss -> db")
+            await update_feeds_in_db(telegram_poller=telegram_poller)
 
-        logging.info("update_rss -> cache")
-        await update_feeds_cache(feed_render_dir=static_path)
+            logging.info("update_rss -> cache")
+            await update_feeds_cache(feed_render_dir=static_path)
 
-        logging.info("update_rss -> sleep")
-        await asyncio.sleep(update_interval_seconds)
+            logging.info("update_rss -> sleep")
+            await asyncio.sleep(update_interval_seconds)
 
-        loop = asyncio.get_event_loop()
-        rss_task = loop.create_task(update_rss())
+            logging.info("update_rss -> scheduling a new run")
+            loop = asyncio.get_event_loop()
+            rss_task = loop.create_task(update_rss())
+        except Exception as e:
+            rss_task = None
+            logging.error(f"update_rss -> error: {e}")
+            raise e
 
     await client.start()
 
