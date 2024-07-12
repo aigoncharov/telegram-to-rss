@@ -198,8 +198,8 @@ async def update_feeds_in_db(telegram_poller: TelegramPoller):
     for feed_to_update in feeds_to_update:
         logging.debug(
             "update_feeds_in_db.update_feed %s %s",
-            feed_to_create.id,
-            feed_to_create.name,
+            feed_to_update.id,
+            feed_to_update.name,
         )
         await telegram_poller.update_feed(feed_to_update)
         logging.debug("update_feeds_in_db.create_feed -> done")
