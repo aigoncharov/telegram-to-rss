@@ -92,8 +92,12 @@ class TelegramPoller:
         await feed.save()
 
         old_feed_entries = (
-            await FeedEntry.all().offset(self._message_limit).order_by("-date")
+            await FeedEntry.filter(feed=feed)
+            .order_by("-date")
+            .limit(self._message_limit)
+            .offset(self._message_limit)
         )
+
         await FeedEntry.filter(
             Q(id__in=[entry.id for entry in old_feed_entries])
         ).delete()
