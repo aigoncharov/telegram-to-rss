@@ -73,11 +73,11 @@ class TelegramPoller:
         if last_feed_entry:
             [_, tg_message_id] = parse_feed_entry_id(last_feed_entry.id)
             get_dialog_messages_args["min_message_id"] = tg_message_id
+        else:
+            get_dialog_messages_args["limit"] = self._new_feed_limit
             logging.warning(
                 f"TelegramPoller.update_feed -> feed {feed.name} ({feed.id}) does not have associated feed entries"
             )
-        else:
-            get_dialog_messages_args["limit"] = self._new_feed_limit
 
         new_dialog_messages = await self._client.get_dialog_messages(
             dialog=dialog, **get_dialog_messages_args
