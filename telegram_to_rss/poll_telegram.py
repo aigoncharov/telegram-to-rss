@@ -44,11 +44,12 @@ class TelegramPoller:
 
         return (list(feed_ids_to_delete), feeds_to_create, feeds_to_update)
 
-    async def bulk_delete_feeds(self, ids: list[int]):
+    async def bulk_delete_feeds(self, ids: list[int] | None):
+        if ids is None:
+            await Feed.all().delete()
+            return
         if len(ids) != 0:
             await Feed.filter(Q(id__in=list(ids))).delete()
-        else:
-            await Feed.all().delete()
 
     @atomic()
     async def create_feed(self, dialog: custom.Dialog):
@@ -91,12 +92,12 @@ class TelegramPoller:
         for new_message in new_dialog_messages:
             if new_message.date is None:
                 logging.warning(
-                    f"TelegramPoller.update_feed {feed.name} ({feed.id}) -> message without a date! WTF? {new_message}"
+                    f"TelegramPoller.update_feed {feed.name} ({feed.id}) -> message without a date! WTF? {new_message.id} {new_message.message}"
                 )
                 continue
             if last_feed_entry and new_message.date <= last_feed_entry.date:
                 logging.warning(
-                    f"TelegramPoller.update_feed {feed.name} ({feed.id}) -> TG sent a message older than we requested! WTF? TG sent ut {new_message}, our last known message {last_feed_entry}"
+                    f"TelegramPoller.update_feed {feed.name} ({feed.id}) -> TG sent a message older than we requested! WTF? TG sent ut {new_message.date} {new_message.message}, our last known message {last_feed_entry.date} {last_feed_entry.message}"
                 )
                 continue
 
@@ -202,7 +203,7 @@ def parse_feed_entry_id(id: str):
 async def reset_feeds_in_db(telegram_poller: TelegramPoller):
     logging.debug("reset_feeds_in_db")
 
-    await telegram_poller.bulk_delete_feeds([])
+    await telegram_poller.bulk_delete_feeds(ids=None)
 
     logging.debug("reset_feeds_in_db -> done")
 

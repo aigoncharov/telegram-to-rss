@@ -47,6 +47,7 @@ async def start_rss_generation():
     async def update_rss():
         global rss_task
 
+        should_reschedule = True
         try:
             logging.info("update_rss -> db")
             await update_feeds_in_db(telegram_poller=telegram_poller)
@@ -56,15 +57,18 @@ async def start_rss_generation():
 
             logging.info("update_rss -> sleep")
             await asyncio.sleep(update_interval_seconds)
+        except asyncio.CancelledError:
+            should_reschedule = False
         except Exception as e:
-            rss_task = None
             logging.error(f"update_rss -> error: {e}")
             logging.warning("update_rss -> rebuilding feeds from scratch")
             await reset_feeds_in_db(telegram_poller=telegram_poller)
+            raise e
         finally:
-            logging.info("update_rss -> scheduling a new run")
-            loop = asyncio.get_event_loop()
-            rss_task = loop.create_task(update_rss())
+            if should_reschedule:
+                logging.info("update_rss -> scheduling a new run")
+                loop = asyncio.get_event_loop()
+                rss_task = loop.create_task(update_rss())
 
     await client.start()
 
