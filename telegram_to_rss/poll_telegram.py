@@ -154,24 +154,30 @@ class TelegramPoller:
 
             last_processed_message = filtered_dialog_messages[-1]
             if dialog_message.photo:
-                feed_entry_media_id = "{}-{}".format(
-                    to_feed_entry_id(feed, dialog_message),
-                    len(last_processed_message.downloaded_media),
-                )
-                media_path = self._static_path.joinpath(feed_entry_media_id)
-
-                def progress_callback(current, total, media_path=media_path):
-                    logging.debug(
-                        "TelegramPoller._process_new_dialog_messages -> downloading media %s: %s out of %s",
-                        media_path,
-                        current,
-                        total,
+                try:
+                    feed_entry_media_id = "{}-{}".format(
+                        to_feed_entry_id(feed, dialog_message),
+                        len(last_processed_message.downloaded_media),
                     )
+                    media_path = self._static_path.joinpath(feed_entry_media_id)
 
-                res_path = await dialog_message.download_media(
-                    file=media_path, progress_callback=progress_callback
-                )
-                last_processed_message.downloaded_media.append(Path(res_path).name)
+                    def progress_callback(current, total, media_path=media_path):
+                        logging.debug(
+                            "TelegramPoller._process_new_dialog_messages -> downloading media %s: %s out of %s",
+                            media_path,
+                            current,
+                            total,
+                        )
+
+                    res_path = await dialog_message.download_media(
+                        file=media_path, progress_callback=progress_callback
+                    )
+                    last_processed_message.downloaded_media.append(Path(res_path).name)
+                except Exception as e:
+                    logging.warning(
+                        f"TelegramPoller._process_new_dialog_messages -> downloading media failed with {e} for message {dialog_message.id} {dialog_message.date} {dialog_message.text}",
+                    )
+                    last_processed_message.downloaded_media.append("FAIL")
 
         feed_entries: list[FeedEntry] = []
         for dialog_message in filtered_dialog_messages:

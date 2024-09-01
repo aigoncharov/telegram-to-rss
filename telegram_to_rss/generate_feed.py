@@ -50,12 +50,18 @@ def generate_feed(feed_render_dir: Path, feed: Feed):
         ET.SubElement(rss_item_el, "title").text = title
 
         images = ""
+        media_download_failure = False
         for media_path in feed_entry.media:
-            media_url = "{}/static/{}".format(base_url, media_path)
-            images += '<br /><img src="{}"/>'.format(media_url)
+            if media_path == "FAIL":
+                media_download_failure = True
+            else:
+                media_url = "{}/static/{}".format(base_url, media_path)
+                images += '<br /><img src="{}"/>'.format(media_url)
         content = feed_entry.message.replace("\n", "<br />") + images
         if feed_entry.has_unsupported_media:
             content += "<br /><strong>This message has unsupported attachment. Open Telegram to view it.</strong>"
+        if media_download_failure:
+            content += "<br /><strong>Downloading some of the media for this message failed. Open Telegram to view it.</strong>"
         ET.SubElement(rss_item_el, "description").text = content
 
         ET.SubElement(rss_item_el, "pubDate").text = feed_entry.date.isoformat()
