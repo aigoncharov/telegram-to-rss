@@ -47,6 +47,8 @@ class TelegramPoller:
     async def bulk_delete_feeds(self, ids: list[int]):
         if len(ids) != 0:
             await Feed.filter(Q(id__in=list(ids))).delete()
+        else:
+            await Feed.all().delete()
 
     @atomic()
     async def create_feed(self, dialog: custom.Dialog):
@@ -182,6 +184,14 @@ def parse_feed_entry_id(id: str):
     return (int(channel_id), int(message_id))
 
 
+async def reset_feeds_in_db(telegram_poller: TelegramPoller):
+    logging.debug("reset_feeds_in_db")
+
+    await telegram_poller.bulk_delete_feeds([])
+
+    logging.debug("reset_feeds_in_db -> done")
+
+
 async def update_feeds_in_db(telegram_poller: TelegramPoller):
     logging.debug("update_feeds_in_db")
 
@@ -214,4 +224,4 @@ async def update_feeds_in_db(telegram_poller: TelegramPoller):
             feed_to_update.name,
         )
         await telegram_poller.update_feed(feed_to_update)
-        logging.debug("update_feeds_in_db.create_feed -> done")
+        logging.debug("update_feeds_in_db.update_feed -> done")

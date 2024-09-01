@@ -16,7 +16,11 @@ from telegram_to_rss.config import (
 from telegram_to_rss.qr_code import get_qr_code_image
 from telegram_to_rss.db import init_feeds_db, close_feeds_db
 from telegram_to_rss.generate_feed import update_feeds_cache
-from telegram_to_rss.poll_telegram import TelegramPoller, update_feeds_in_db
+from telegram_to_rss.poll_telegram import (
+    TelegramPoller,
+    update_feeds_in_db,
+    reset_feeds_in_db,
+)
 from telegram_to_rss.models import Feed
 import logging
 
@@ -52,14 +56,15 @@ async def start_rss_generation():
 
             logging.info("update_rss -> sleep")
             await asyncio.sleep(update_interval_seconds)
-
-            logging.info("update_rss -> scheduling a new run")
-            loop = asyncio.get_event_loop()
-            rss_task = loop.create_task(update_rss())
         except Exception as e:
             rss_task = None
             logging.error(f"update_rss -> error: {e}")
-            raise e
+            logging.warning("update_rss -> rebuilding feeds from scratch")
+            await reset_feeds_in_db(telegram_poller=telegram_poller)
+        finally:
+            logging.info("update_rss -> scheduling a new run")
+            loop = asyncio.get_event_loop()
+            rss_task = loop.create_task(update_rss())
 
     await client.start()
 
