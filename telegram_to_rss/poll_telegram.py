@@ -70,6 +70,9 @@ class TelegramPoller:
     async def update_feed(self, dialog: custom.Dialog):
         feed = await Feed.get(id=dialog.id)
         last_feed_entry = await FeedEntry.filter(feed=feed).order_by("-date").first()
+        logging.debug(
+            f"TelegramPoller.update_feed -> last feed entry {last_feed_entry}",
+        )
 
         get_dialog_messages_args = {}
         if last_feed_entry:
@@ -84,6 +87,18 @@ class TelegramPoller:
         new_dialog_messages = await self._client.get_dialog_messages(
             dialog=dialog, **get_dialog_messages_args
         )
+
+        for new_message in new_dialog_messages:
+            if new_message.date is None:
+                logging.warning(
+                    f"TelegramPoller.update_feed {feed.name} ({feed.id}) -> message without a date! WTF? {new_message}"
+                )
+                continue
+            if last_feed_entry and new_message.date <= last_feed_entry.date:
+                logging.warning(
+                    f"TelegramPoller.update_feed {feed.name} ({feed.id}) -> TG sent a message older than we requested! WTF? TG sent ut {new_message}, our last known message {last_feed_entry}"
+                )
+                continue
 
         feed_entries = await self._process_new_dialog_messages(
             feed, new_dialog_messages
