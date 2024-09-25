@@ -4,7 +4,6 @@ from tortoise.expressions import Q
 from tortoise.transactions import atomic
 from pathlib import Path
 import logging
-import pprint
 
 
 class TelegramPoller:
