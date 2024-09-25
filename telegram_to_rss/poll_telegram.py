@@ -116,12 +116,8 @@ class TelegramPoller:
             .offset(self._message_limit)
         )
 
-        # await FeedEntry.filter(
-        #     Q(id__in=[entry.id for entry in old_feed_entries])
-        # ).delete()
-
         for entry in old_feed_entries:
-            logging.info(f"Deleting FeedEntry with id: {entry.id}")
+            logging.debug(f"Deleting FeedEntry with id: {entry.id}")
             await entry.delete()
 
     async def _process_new_dialog_messages(
