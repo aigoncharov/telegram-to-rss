@@ -49,25 +49,36 @@ def generate_feed(feed_render_dir: Path, feed: Feed):
         title = message_text[:100]
         ET.SubElement(rss_item_el, "title").text = title
 
-        images = ""
+        media_content = ""
         media_download_failure = False
+
+        # processing mediafiles
         for media_path in feed_entry.media:
             if media_path == "FAIL":
                 media_download_failure = True
             else:
                 media_url = "{}/static/{}".format(base_url, media_path)
-                images += '<br /><img src="{}"/>'.format(media_url)
-        content = feed_entry.message.replace("\n", "<br />") + images
+
+                # checking file type
+                if media_path.endswith(('.jpg', '.png', '.gif')):
+                    media_content += '<br /><img src="{}" alt="media"/>'.format(media_url)
+                elif media_path.endswith('.mp4'):
+                    media_content += (
+                        '<br /><video controls poster="{}" style="max-width:100%;">'
+                        '<source src="{}" type="video/mp4">'
+                        'Your browser does not support the video tag.</video>'
+                    ).format(media_url, media_url)
+
+        # creating feed with text and media
+        content = feed_entry.message.replace("\n", "<br />") + media_content
         if feed_entry.has_unsupported_media:
             content += "<br /><strong>This message has unsupported attachment. Open Telegram to view it.</strong>"
         if media_download_failure:
             content += "<br /><strong>Downloading some of the media for this message failed. Open Telegram to view it.</strong>"
-        ET.SubElement(rss_item_el, "description").text = content
 
+        ET.SubElement(rss_item_el, "description").text = content
         ET.SubElement(rss_item_el, "pubDate").text = feed_entry.date.isoformat()
-        ET.SubElement(rss_item_el, "link", {"href": feed_entry_url}).text = (
-            feed_entry_url
-        )
+        ET.SubElement(rss_item_el, "link", {"href": feed_entry_url}).text = feed_entry_url
 
     final_feed_file = feed_render_dir.joinpath("{}.xml".format(feed.id))
 
@@ -77,7 +88,6 @@ def generate_feed(feed_render_dir: Path, feed: Feed):
     )
 
     logging.info("generate_feed -> done %s %s", feed.name, feed.id)
-
 
 async def update_feeds_cache(feed_render_dir: str):
     feeds = await Feed.all().prefetch_related(
