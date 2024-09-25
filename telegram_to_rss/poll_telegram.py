@@ -178,7 +178,36 @@ class TelegramPoller:
                         f"TelegramPoller._process_new_dialog_messages -> downloading media failed with {e} for message {dialog_message.id} {dialog_message.date} {dialog_message.text}",
                     )
                     last_processed_message.downloaded_media.append("FAIL")
+            elif isinstance(dialog_message.media, types.MessageMediaDocument):
+                document = dialog_message.media.document
+                mime_type = getattr(document, 'mime_type', None)
+                if mime_type and mime_type.startswith("video/"):
+                    try:
+                        feed_entry_media_id = "{}-{}".format(
+                            to_feed_entry_id(feed, dialog_message),
+                            len(last_processed_message.downloaded_media),
+                        )
+                        media_path = self._static_path.joinpath(feed_entry_media_id)
+    
+                        def progress_callback(current, total, media_path=media_path):
+                            logging.debug(
+                                "TelegramPoller._process_new_dialog_messages -> downloading video %s: %s out of %s",
+                                media_path,
+                                current,
+                                total,
+                            )
+    
+                        res_path = await dialog_message.download_media(
+                            file=media_path, progress_callback=progress_callback
+                        )
+                        last_processed_message.downloaded_media.append(Path(res_path).name)
+                    except Exception as e:
+                        logging.warning(
+                            f"TelegramPoller._process_new_dialog_messages -> downloading video failed with {e} for message {dialog_message.id} {dialog_message.date} {dialog_message.text}",
+                        )
+                        last_processed_message.downloaded_media.append("FAIL")
 
+        # creating FeedEntry with mediafiles
         feed_entries: list[FeedEntry] = []
         for dialog_message in filtered_dialog_messages:
             feed_entry_id = to_feed_entry_id(feed, dialog_message)
@@ -190,10 +219,9 @@ class TelegramPoller:
                     date=dialog_message.date,
                     media=dialog_message.downloaded_media,
                     has_unsupported_media=dialog_message.media is not None
-                    and not isinstance(dialog_message.media, types.MessageMediaPhoto),
+                    and not isinstance(dialog_message.media, (types.MessageMediaPhoto, types.MessageMediaDocument)),
                 )
             )
-
         return feed_entries
 
 
