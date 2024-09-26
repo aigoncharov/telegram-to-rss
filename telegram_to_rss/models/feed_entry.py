@@ -1,4 +1,4 @@
-import asyncio
+import logging
 from tortoise.models import Model
 from tortoise import fields
 from tortoise.signals import post_delete
@@ -18,14 +18,17 @@ class FeedEntry(Model):
     has_unsupported_media = fields.BooleanField(default=False)
 
 
-@post_delete
+@post_delete(FeedEntry)
 async def remove_associated_file(
     sender: Type[FeedEntry],
     instance: FeedEntry,
+    using_db
 ) -> None:
-    await asyncio.gather(
-        *[
-            Path(static_path).joinpath(media_relative_path).unlink(missing_ok=True)
-            for media_relative_path in instance.media
-        ]
-    )
+    try:
+        for media_relative_path in instance.media:
+            file_path = Path(static_path).joinpath(media_relative_path)
+            await file_path.unlink(missing_ok=True)
+            logging.debug(f"File removed: {file_path}")
+
+    except Exception as e:
+        logging.error(f"Error while removing FeedEntry id {instance.id}: {e}")
