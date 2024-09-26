@@ -11,6 +11,7 @@ class TelegramPoller:
     _message_limit: int
     _new_feed_limit: int
     _static_path: Path
+    _max_video_size: int
 
     def __init__(
         self,
@@ -18,11 +19,14 @@ class TelegramPoller:
         message_limit: int,
         new_feed_limit: int,
         static_path: Path,
+        max_video_size: int,
     ) -> None:
         self._client = client
         self._message_limit = message_limit
         self._new_feed_limit = new_feed_limit
         self._static_path = static_path
+        self._max_video_size = max_video_size
+
 
     async def fetch_dialogs(self):
         tg_dialogs = await self._client.list_dialogs()
@@ -124,90 +128,64 @@ class TelegramPoller:
         self, feed: Feed, dialog_messages: list[custom.Message]
     ):
         filtered_dialog_messages: list[custom.Message] = []
-        for dialog_message in dialog_messages:
-            logging.debug(
-                "TelegramPoller._process_new_dialog_messages -> processing message %s %s %s %s",
-                dialog_message.id,
-                dialog_message.grouped_id,
-                dialog_message.photo is not None,
-                dialog_message.text,
-            )
+        logging.info(f"Processing {len(dialog_messages)} messages from {feed.name}")
 
-            if dialog_message.text is None:
+        for dialog_message in dialog_messages:
+            try:
+                logging.debug(
+                    "Processing message ID: %s, grouped_id: %s, has photo: %s, has media: %s, text: %s",
+                    dialog_message.id,
+                    dialog_message.grouped_id,
+                    dialog_message.photo is not None,
+                    dialog_message.media is not None,
+                    dialog_message.text,
+                )
+
+                if dialog_message.text is None:
+                    continue
+
+                dialog_message.downloaded_media = []
+
+                if (
+                    dialog_message.grouped_id is None
+                    or len(filtered_dialog_messages) == 0
+                    or dialog_message.grouped_id != filtered_dialog_messages[-1].grouped_id
+                ):
+                    filtered_dialog_messages.append(dialog_message)
+                else:
+                    if len(dialog_message.text) > len(filtered_dialog_messages[-1].text):
+                        filtered_dialog_messages[-1].text = dialog_message.text
+
+                last_processed_message = filtered_dialog_messages[-1]
+
+                if dialog_message.photo:
+                    await self._download_media(dialog_message, last_processed_message, feed, 'photo')
+
+                if isinstance(dialog_message.media, types.MessageMediaDocument):
+                    document = dialog_message.media.document
+                    mime_type = getattr(document, 'mime_type', None)
+                    if mime_type:
+                        if mime_type.startswith("video/"):
+                            video_size = document.size
+                            if video_size > self._max_video_size:
+                                logging.info(
+                                    f"Video in message {dialog_message.id} is too large ({video_size} bytes). Skipping download."
+                                )
+                                last_processed_message.downloaded_media.append("TOO_LARGE")
+                                continue
+                            await self._download_media(dialog_message, last_processed_message, feed, 'video')
+                        elif mime_type.startswith("image/"):
+                            await self._download_media(dialog_message, last_processed_message, feed, 'image')
+                        else:
+                            logging.debug(
+                                f"Unsupported media type '{mime_type}' in message {dialog_message.id}"
+                            )
+                            last_processed_message.has_unsupported_media = True
+
+            except Exception as e:
+                logging.error(f"Error processing message {dialog_message.id}: {e}", exc_info=True)
                 continue
 
-            dialog_message.downloaded_media = []
-
-            if (
-                dialog_message.grouped_id is None
-                or len(filtered_dialog_messages) == 0
-                or dialog_message.grouped_id != filtered_dialog_messages[-1].grouped_id
-            ):
-                filtered_dialog_messages.append(dialog_message)
-
-            if (
-                len(filtered_dialog_messages) != 0
-                and dialog_message.grouped_id == filtered_dialog_messages[-1].grouped_id
-                and len(dialog_message.text) > len(filtered_dialog_messages[-1].text)
-            ):
-                filtered_dialog_messages[-1].text = dialog_message.text
-
-            last_processed_message = filtered_dialog_messages[-1]
-            if dialog_message.photo:
-                try:
-                    feed_entry_media_id = "{}-{}".format(
-                        to_feed_entry_id(feed, dialog_message),
-                        len(last_processed_message.downloaded_media),
-                    )
-                    media_path = self._static_path.joinpath(feed_entry_media_id)
-
-                    def progress_callback(current, total, media_path=media_path):
-                        logging.debug(
-                            "TelegramPoller._process_new_dialog_messages -> downloading media %s: %s out of %s",
-                            media_path,
-                            current,
-                            total,
-                        )
-
-                    res_path = await dialog_message.download_media(
-                        file=media_path, progress_callback=progress_callback
-                    )
-                    last_processed_message.downloaded_media.append(Path(res_path).name)
-                except Exception as e:
-                    logging.warning(
-                        f"TelegramPoller._process_new_dialog_messages -> downloading media failed with {e} for message {dialog_message.id} {dialog_message.date} {dialog_message.text}",
-                    )
-                    last_processed_message.downloaded_media.append("FAIL")
-            elif isinstance(dialog_message.media, types.MessageMediaDocument):
-                document = dialog_message.media.document
-                mime_type = getattr(document, 'mime_type', None)
-                if mime_type and mime_type.startswith("video/"):
-                    try:
-                        feed_entry_media_id = "{}-{}".format(
-                            to_feed_entry_id(feed, dialog_message),
-                            len(last_processed_message.downloaded_media),
-                        )
-                        media_path = self._static_path.joinpath(feed_entry_media_id)
-    
-                        def progress_callback(current, total, media_path=media_path):
-                            logging.debug(
-                                "TelegramPoller._process_new_dialog_messages -> downloading video %s: %s out of %s",
-                                media_path,
-                                current,
-                                total,
-                            )
-    
-                        res_path = await dialog_message.download_media(
-                            file=media_path, progress_callback=progress_callback
-                        )
-                        last_processed_message.downloaded_media.append(Path(res_path).name)
-                    except Exception as e:
-                        logging.warning(
-                            f"TelegramPoller._process_new_dialog_messages -> downloading video failed with {e} for message {dialog_message.id} {dialog_message.date} {dialog_message.text}",
-                        )
-                        last_processed_message.downloaded_media.append("FAIL")
-
-        # creating FeedEntry with mediafiles
         feed_entries: list[FeedEntry] = []
         for dialog_message in filtered_dialog_messages:
             feed_entry_id = to_feed_entry_id(feed, dialog_message)
@@ -218,11 +196,38 @@ class TelegramPoller:
                     message=dialog_message.text,
                     date=dialog_message.date,
                     media=dialog_message.downloaded_media,
-                    has_unsupported_media=dialog_message.media is not None
-                    and not isinstance(dialog_message.media, (types.MessageMediaPhoto, types.MessageMediaDocument)),
+                    has_unsupported_media=getattr(dialog_message, 'has_unsupported_media', False),
                 )
             )
         return feed_entries
+
+    async def _download_media(self, dialog_message, last_processed_message, feed, media_type):
+        try:
+            feed_entry_media_id = "{}-{}".format(
+                to_feed_entry_id(feed, dialog_message),
+                len(last_processed_message.downloaded_media),
+            )
+            media_path = self._static_path.joinpath(feed_entry_media_id)
+
+            def progress_callback(current, total, media_path=media_path):
+                logging.debug(
+                    "Downloading %s %s: %s out of %s",
+                    media_type,
+                    media_path,
+                    current,
+                    total,
+                )
+
+            res_path = await dialog_message.download_media(
+                file=media_path, progress_callback=progress_callback
+            )
+            last_processed_message.downloaded_media.append(Path(res_path).name)
+            logging.debug(f"Downloaded {media_type} to {res_path}")
+        except Exception as e:
+            logging.warning(
+                f"Downloading {media_type} failed with {e} for message {dialog_message.id} {dialog_message.date} {dialog_message.text}",
+            )
+            last_processed_message.downloaded_media.append("FAIL")
 
 
 def to_feed_entry_id(feed: Feed, dialog_message: custom.Message):
@@ -231,7 +236,7 @@ def to_feed_entry_id(feed: Feed, dialog_message: custom.Message):
 
 def parse_feed_entry_id(id: str):
     [channel_id, message_id] = id.split("--")
-    return (int(channel_id), int(message_id))
+    return int(channel_id), int(message_id)
 
 
 async def reset_feeds_in_db(telegram_poller: TelegramPoller):
