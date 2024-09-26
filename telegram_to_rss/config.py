@@ -11,6 +11,8 @@ feed_size_limit = int(os.environ.get("FEED_SIZE") or 200)
 initial_feed_size = int(os.environ.get("INITIAL_FEED_SIZE") or 50)
 base_url = os.environ.get("BASE_URL")
 bind = os.environ.get("BIND") or "127.0.0.1:3042"
+max_video_size_mb = int(os.environ.get("MAX_VIDEO_SIZE_MB", 10))
+max_video_size = max_video_size_mb * 1024 * 1024
 
 loglevel = os.environ.get("LOGLEVEL", "INFO").upper()
 
