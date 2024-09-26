@@ -1,9 +1,16 @@
-FROM python:3.12-bookworm
+FROM python:3.12-slim AS builder
 
 WORKDIR /usr/src/app
 
 COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+
+RUN pip install --no-cache-dir --target=/usr/src/app/dependencies -r requirements.txt
+
+FROM python:3.12-slim
+
+WORKDIR /usr/src/app
+
+COPY --from=builder /usr/src/app/dependencies /usr/local/lib/python3.12/site-packages
 
 COPY telegram_to_rss ./telegram_to_rss
 
