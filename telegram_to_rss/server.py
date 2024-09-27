@@ -12,6 +12,7 @@ from telegram_to_rss.config import (
     update_interval_seconds,
     db_path,
     loglevel,
+    max_video_size,
 )
 from telegram_to_rss.qr_code import get_qr_code_image
 from telegram_to_rss.db import init_feeds_db, close_feeds_db
@@ -24,7 +25,11 @@ from telegram_to_rss.poll_telegram import (
 from telegram_to_rss.models import Feed
 import logging
 
-logging.basicConfig(level=loglevel)
+logging.basicConfig(
+    level=loglevel,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
 app = Quart(__name__, static_folder=static_path, static_url_path="/static")
 client = TelegramToRssClient(
@@ -35,6 +40,7 @@ telegram_poller = TelegramPoller(
     message_limit=feed_size_limit,
     new_feed_limit=initial_feed_size,
     static_path=static_path,
+    max_video_size=max_video_size,
 )
 rss_task: asyncio.Task | None = None
 

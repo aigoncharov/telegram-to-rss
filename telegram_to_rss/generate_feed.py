@@ -51,11 +51,14 @@ def generate_feed(feed_render_dir: Path, feed: Feed):
 
         media_content = ""
         media_download_failure = False
+        media_too_large = False
 
         # processing mediafiles
         for media_path in feed_entry.media:
             if media_path == "FAIL":
                 media_download_failure = True
+            elif media_path == "TOO_LARGE":
+                media_too_large = True
             else:
                 media_url = "{}/static/{}".format(base_url, media_path)
 
@@ -75,6 +78,8 @@ def generate_feed(feed_render_dir: Path, feed: Feed):
             content += "<br /><strong>This message has unsupported attachment. Open Telegram to view it.</strong>"
         if media_download_failure:
             content += "<br /><strong>Downloading some of the media for this message failed. Open Telegram to view it.</strong>"
+        if media_too_large:
+            content += "<br /><strong>The video is too large.</strong>"
 
         ET.SubElement(rss_item_el, "description").text = content
         ET.SubElement(rss_item_el, "pubDate").text = feed_entry.date.isoformat()
@@ -88,6 +93,7 @@ def generate_feed(feed_render_dir: Path, feed: Feed):
     )
 
     logging.info("generate_feed -> done %s %s", feed.name, feed.id)
+
 
 async def update_feeds_cache(feed_render_dir: str):
     feeds = await Feed.all().prefetch_related(
