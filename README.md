@@ -74,3 +74,4 @@ Available environment variables (\* marks required ones):
 - `FEED_SIZE` - size of the RSS feed. When your RSS feed grows larger than the limit, older entries are going to be discarded. Default: 200.
 - `INITIAL_FEED_SIZE` - number of messages we fetch for any new feed on the first run. Default value: 50.
 - `UPDATE_INTERVAL` - how often the app should fetch new messages from Telegram and regenerate RSS feeds (in seconds). Default: 3600.
+- `MAX_VIDEO_SIZE_MB` - the maximum allowed size (in megabytes) for video files to be downloaded from Telegram. Default value: 10.
